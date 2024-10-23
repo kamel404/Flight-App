@@ -11,9 +11,28 @@ class FlightsPage extends StatefulWidget {
   _FlightsPageState createState() => _FlightsPageState();
 }
 
+const _navBarItems = [
+  BottomNavigationBarItem(
+    icon: Icon(Icons.home_outlined),
+    activeIcon: Icon(Icons.home_rounded),
+    label: 'Home',
+  ),
+  BottomNavigationBarItem(
+    icon: Icon(Icons.bookmark_border_outlined),
+    activeIcon: Icon(Icons.bookmark_rounded),
+    label: 'Flights',
+  ),
+  BottomNavigationBarItem(
+    icon: Icon(Icons.person_outline_rounded),
+    activeIcon: Icon(Icons.person_rounded),
+    label: 'Profile',
+  ),
+];
+
 class _FlightsPageState extends State<FlightsPage> {
   List<dynamic> flights = [];
   bool isLoading = true;
+  int _selectedIndex = 0;
 
   // Replace with your actual API key
   final String apiKey = 'c0f413b5368a139ac89e892bb4e07f40';
@@ -38,35 +57,79 @@ class _FlightsPageState extends State<FlightsPage> {
     }
   }
 
+  void _onNavBarTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final bool isSmallScreen = width < 600;
+    final bool isLargeScreen = width > 800;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Flights'),
       ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: flights.length,
-              itemBuilder: (context, index) {
-                final flight = flights[index];
-                final departure = flight['departure'];
-                final arrival = flight['arrival'];
-                final airline = flight['airline']['name'];
-                final flightStatus =
-                    flight['flight_status']; // Fetch the flight status
-
-                return FlightCard(
-                  flight: flight,
-                  airline: airline,
-                  departureAirport: departure['airport'],
-                  departureTime: departure['scheduled'],
-                  arrivalAirport: arrival['airport'],
-                  arrivalTime: arrival['scheduled'],
-                  flightStatus: flightStatus, // Pass the status to the card
-                );
+      bottomNavigationBar: isSmallScreen
+          ? BottomNavigationBar(
+              items: _navBarItems,
+              currentIndex: _selectedIndex,
+              onTap: _onNavBarTapped,
+            )
+          : null,
+      body: Row(
+        children: <Widget>[
+          if (!isSmallScreen)
+            NavigationRail(
+              selectedIndex: _selectedIndex,
+              onDestinationSelected: (int index) {
+                setState(() {
+                  _selectedIndex = index;
+                });
               },
+              extended: isLargeScreen,
+              destinations: _navBarItems
+                  .map((item) => NavigationRailDestination(
+                      icon: item.icon,
+                      selectedIcon: item.activeIcon,
+                      label: Text(item.label!)))
+                  .toList(),
             ),
+          const VerticalDivider(thickness: 1, width: 1),
+          // Main content area
+          Expanded(
+            child: _selectedIndex == 0
+                ? isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : ListView.builder(
+                        itemCount: flights.length,
+                        itemBuilder: (context, index) {
+                          final flight = flights[index];
+                          final departure = flight['departure'];
+                          final arrival = flight['arrival'];
+                          final airline = flight['airline']['name'];
+                          final flightStatus = flight['flight_status'];
+
+                          return FlightCard(
+                            flight: flight,
+                            airline: airline,
+                            departureAirport: departure['airport'],
+                            departureTime: departure['scheduled'],
+                            arrivalAirport: arrival['airport'],
+                            arrivalTime: arrival['scheduled'],
+                            flightStatus: flightStatus,
+                          );
+                        },
+                      )
+                : Center(
+                    child: Text("${_navBarItems[_selectedIndex].label} Page"),
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -78,7 +141,7 @@ class FlightCard extends StatelessWidget {
   final String departureTime;
   final String arrivalAirport;
   final String arrivalTime;
-  final String flightStatus; // New field for flight status
+  final String flightStatus;
 
   const FlightCard({
     super.key,
@@ -388,7 +451,6 @@ class FlightDetailPage extends StatelessWidget {
   }
 }
 
-// Custom widget to display departure and arrival info
 class FlightInfoRow extends StatelessWidget {
   final IconData icon;
   final String title;
