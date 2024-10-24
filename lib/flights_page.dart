@@ -1,4 +1,4 @@
-// ignore_for_file: library_private_types_in_public_api
+// ignore_for_file: library_private_types_in_public_api, unnecessary_const
 
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -103,7 +103,9 @@ class _FlightsPageState extends State<FlightsPage> {
           Expanded(
             child: _selectedIndex == 0
                 ? isLoading
-                    ? const Center(child: CircularProgressIndicator())
+                    ? const Center(
+                        child: FadingCircle(),
+                      )
                     : ListView.builder(
                         itemCount: flights.length,
                         itemBuilder: (context, index) {
@@ -129,6 +131,53 @@ class _FlightsPageState extends State<FlightsPage> {
                   ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class FadingCircle extends StatefulWidget {
+  const FadingCircle({super.key});
+
+  @override
+  _FadingCircleState createState() => _FadingCircleState();
+}
+
+class _FadingCircleState extends State<FadingCircle>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: FadeTransition(
+        opacity: _animation,
+        child: Container(
+          width: 60,
+          height: 60,
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.blueAccent,
+          ),
+        ),
       ),
     );
   }
@@ -311,187 +360,84 @@ class FlightDetailPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Flight $flightNumber Details'),
-        backgroundColor: Colors.blueAccent,
+        title: const Text('Flight Details'),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Airline and Flight Number
-              Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                elevation: 8,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      Text(
-                        airline,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blueAccent,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.flight_takeoff, color: statusColor),
-                          const SizedBox(width: 8),
-                          Text(
-                            "Flight $flightNumber",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: statusColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Airline and Flight Status
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  airline,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blueAccent,
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-
-              // Flight Route Visualization
-              Center(
-                child: Column(
-                  children: [
-                    const Icon(Icons.flight,
-                        size: 50, color: Colors.blueAccent),
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          departure['airport'],
-                          style: const TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(width: 10),
-                        const Icon(Icons.arrow_forward, color: Colors.grey),
-                        const SizedBox(width: 10),
-                        Text(
-                          arrival['airport'],
-                          style: const TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                      ],
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: statusColor,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    flightStatus.toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 30),
-
-              // Departure and Arrival Details
-              Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                elevation: 4,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      FlightInfoRow(
-                        icon: Icons.flight_takeoff,
-                        title: 'Departure',
-                        airport: departure['airport'],
-                        time: departure['scheduled'],
-                      ),
-                      const Divider(),
-                      FlightInfoRow(
-                        icon: Icons.flight_land,
-                        title: 'Arrival',
-                        airport: arrival['airport'],
-                        time: arrival['scheduled'],
-                      ),
-                    ],
                   ),
                 ),
-              ),
+              ],
+            ),
+            const SizedBox(height: 20),
 
-              // Flight Status
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: statusColor,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      flightStatus.toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
+            // Flight Number
+            Text(
+              'Flight Number: $flightNumber',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
+            ),
+            const SizedBox(height: 20),
 
-              // Spacer for better layout in scrolling view
-              const SizedBox(height: 20),
-            ],
-          ),
+            // Departure Information
+            const Text(
+              'Departure',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(departure['airport'], style: const TextStyle(fontSize: 16)),
+            Text(departure['scheduled'],
+                style: const TextStyle(color: Colors.grey)),
+            const SizedBox(height: 20),
+
+            // Arrival Information
+            const Text(
+              'Arrival',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(arrival['airport'], style: const TextStyle(fontSize: 16)),
+            Text(arrival['scheduled'],
+                style: const TextStyle(color: Colors.grey)),
+            const SizedBox(height: 20),
+          ],
         ),
       ),
-    );
-  }
-}
-
-class FlightInfoRow extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String airport;
-  final String time;
-
-  const FlightInfoRow({
-    super.key,
-    required this.icon,
-    required this.title,
-    required this.airport,
-    required this.time,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, color: Colors.blueAccent, size: 30),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              Text(
-                airport,
-                style: const TextStyle(fontSize: 16),
-              ),
-              Text(
-                time,
-                style: const TextStyle(color: Colors.grey),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }
