@@ -1,4 +1,4 @@
-// ignore_for_file: library_private_types_in_public_api, unnecessary_const
+// ignore_for_file: library_private_types_in_public_api, unnecessary_const, prefer_const_constructors
 
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -35,7 +35,7 @@ class _FlightsPageState extends State<FlightsPage> {
   int _selectedIndex = 0;
 
   // Replace with your actual API key
-  final String apiKey = 'c0f413b5368a139ac89e892bb4e07f40';
+  final String apiKey = 'c0762e6ba3c28e79a617033cf4a6e83d';
 
   @override
   void initState() {
@@ -361,6 +361,7 @@ class FlightDetailPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Flight Details'),
+        elevation: 0,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -371,18 +372,33 @@ class FlightDetailPage extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  airline,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blueAccent,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        airline,
+                        style: const TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blueAccent,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Flight Number: $flightNumber',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
+                    horizontal: 12,
+                    vertical: 8,
                   ),
                   decoration: BoxDecoration(
                     color: statusColor,
@@ -393,6 +409,7 @@ class FlightDetailPage extends StatelessWidget {
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
+                      fontSize: 14,
                     ),
                   ),
                 ),
@@ -400,44 +417,100 @@ class FlightDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // Flight Number
-            Text(
-              'Flight Number: $flightNumber',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 20),
-
             // Departure Information
-            const Text(
-              'Departure',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(departure['airport'], style: const TextStyle(fontSize: 16)),
-            Text(departure['scheduled'],
-                style: const TextStyle(color: Colors.grey)),
+            _buildFlightInfoSection('Departure Information', departure),
             const SizedBox(height: 20),
 
             // Arrival Information
-            const Text(
-              'Arrival',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(arrival['airport'], style: const TextStyle(fontSize: 16)),
-            Text(arrival['scheduled'],
-                style: const TextStyle(color: Colors.grey)),
+            _buildFlightInfoSection('Arrival Information', arrival),
             const SizedBox(height: 20),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildFlightInfoSection(String title, Map<String, dynamic> info) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Departure Airport
+                _buildFlightDetailCard(
+                  Icons.airport_shuttle,
+                  info['airport'],
+                  'Airport',
+                ),
+                // Scheduled Time
+                _buildFlightDetailCard(
+                  Icons.schedule,
+                  info['scheduled'],
+                  'Scheduled',
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Additional Info (e.g., Gate, Terminal)
+            Text(
+              'Gate: ${info['gate'] ?? 'N/A'}',
+              style: const TextStyle(fontSize: 16),
+            ),
+            Text(
+              'Terminal: ${info['terminal'] ?? 'N/A'}',
+              style: const TextStyle(fontSize: 16),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFlightDetailCard(IconData icon, String detail, String label) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        CircleAvatar(
+          radius: 30,
+          backgroundColor: Colors.blueAccent.withOpacity(0.1),
+          child: Icon(
+            icon,
+            color: Colors.blueAccent,
+            size: 24,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          detail,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.grey),
+        ),
+      ],
     );
   }
 }
