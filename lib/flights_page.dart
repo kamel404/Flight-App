@@ -32,7 +32,7 @@ const _navBarItems = [
 class _FlightsPageState extends State<FlightsPage> {
   List<dynamic> flights = [];
   bool isLoading = true;
-  int _selectedIndex = 0;
+  int _selectedIndex = 0; // Default page
 
   // Replace with your actual API key
   final String apiKey = 'c0762e6ba3c28e79a617033cf4a6e83d';
@@ -73,13 +73,11 @@ class _FlightsPageState extends State<FlightsPage> {
       appBar: AppBar(
         title: const Text('Flights'),
       ),
-      bottomNavigationBar: isSmallScreen
-          ? BottomNavigationBar(
-              items: _navBarItems,
-              currentIndex: _selectedIndex,
-              onTap: _onNavBarTapped,
-            )
-          : null,
+      bottomNavigationBar: BottomNavigationBar(
+        items: _navBarItems,
+        currentIndex: _selectedIndex,
+        onTap: _onNavBarTapped,
+      ),
       body: Row(
         children: <Widget>[
           if (!isSmallScreen)
@@ -101,7 +99,7 @@ class _FlightsPageState extends State<FlightsPage> {
           const VerticalDivider(thickness: 1, width: 1),
           // Main content area
           Expanded(
-            child: _selectedIndex == 0
+            child: _selectedIndex == 1 // Flights page index
                 ? isLoading
                     ? const Center(
                         child: FadingCircle(),
