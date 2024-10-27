@@ -1,8 +1,9 @@
-// ignore_for_file: library_private_types_in_public_api, unnecessary_const, prefer_const_constructors
+// ignore_for_file: library_private_types_in_public_api, unnecessary_const, prefer_const_constructors, use_key_in_widget_constructors
 
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FlightsPage extends StatefulWidget {
   const FlightsPage({super.key});
@@ -18,14 +19,14 @@ const _navBarItems = [
     label: 'Home',
   ),
   BottomNavigationBarItem(
-    icon: Icon(Icons.bookmark_border_outlined),
-    activeIcon: Icon(Icons.bookmark_rounded),
+    icon: Icon(Icons.flight_land_rounded),
+    activeIcon: Icon(Icons.flight_land_rounded),
     label: 'Flights',
   ),
   BottomNavigationBarItem(
-    icon: Icon(Icons.person_outline_rounded),
-    activeIcon: Icon(Icons.person_rounded),
-    label: 'Profile',
+    icon: Icon(Icons.settings),
+    activeIcon: Icon(Icons.settings),
+    label: 'Settings',
   ),
 ];
 
@@ -33,17 +34,59 @@ class _FlightsPageState extends State<FlightsPage> {
   List<dynamic> flights = [];
   bool isLoading = true;
   int _selectedIndex = 0; // Default page
-
-  // Replace with your actual API key
-  final String apiKey = 'c0762e6ba3c28e79a617033cf4a6e83d';
+  bool autoRefresh = true; // Auto-refresh toggle
+  String lastUpdated = ""; // Timestamp for last update
+  final String apiKey = '525c242ee8ebc29f8e3da6ba6e528d40';
 
   @override
   void initState() {
     super.initState();
+    _loadAutoRefreshSetting(); // Load setting when initializing
     fetchFlights();
+    if (autoRefresh) {
+      _startAutoRefresh();
+    }
+  }
+
+  // Load the auto-refresh setting from shared preferences
+  Future<void> _loadAutoRefreshSetting() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      autoRefresh = prefs.getBool('autoRefresh') ?? true; // Default to true
+    });
+    if (autoRefresh) {
+      _startAutoRefresh();
+    }
+  }
+
+  // Toggle auto-refresh and save preference
+  void _toggleAutoRefresh() async {
+    setState(() {
+      autoRefresh = !autoRefresh;
+      SharedPreferences.getInstance().then((prefs) {
+        prefs.setBool('autoRefresh', autoRefresh);
+      });
+      if (autoRefresh) {
+        _startAutoRefresh();
+      }
+    });
+  }
+
+  // Method to start auto-refresh
+  void _startAutoRefresh() {
+    Future.delayed(Duration(seconds: 10), () {
+      if (autoRefresh) {
+        fetchFlights();
+        _startAutoRefresh(); // Recursively call to continue refreshing
+      }
+    });
   }
 
   Future<void> fetchFlights() async {
+    setState(() {
+      isLoading = true; // Set loading state
+    });
+
     final response = await http.get(Uri.parse(
         'http://api.aviationstack.com/v1/flights?access_key=$apiKey'));
 
@@ -51,6 +94,7 @@ class _FlightsPageState extends State<FlightsPage> {
       setState(() {
         flights = jsonDecode(response.body)['data'];
         isLoading = false;
+        lastUpdated = DateTime.now().toString().substring(11, 19);
       });
     } else {
       throw Exception('Failed to load flights');
@@ -78,55 +122,111 @@ class _FlightsPageState extends State<FlightsPage> {
         currentIndex: _selectedIndex,
         onTap: _onNavBarTapped,
       ),
-      body: Row(
-        children: <Widget>[
-          if (!isSmallScreen)
-            NavigationRail(
-              selectedIndex: _selectedIndex,
-              onDestinationSelected: (int index) {
-                setState(() {
-                  _selectedIndex = index;
-                });
-              },
-              extended: isLargeScreen,
-              destinations: _navBarItems
-                  .map((item) => NavigationRailDestination(
-                      icon: item.icon,
-                      selectedIcon: item.activeIcon,
-                      label: Text(item.label!)))
-                  .toList(),
-            ),
-          const VerticalDivider(thickness: 1, width: 1),
-          // Main content area
-          Expanded(
-            child: _selectedIndex == 1 // Flights page index
-                ? isLoading
-                    ? const Center(
-                        child: FadingCircle(),
-                      )
-                    : ListView.builder(
-                        itemCount: flights.length,
-                        itemBuilder: (context, index) {
-                          final flight = flights[index];
-                          final departure = flight['departure'];
-                          final arrival = flight['arrival'];
-                          final airline = flight['airline']['name'];
-                          final flightStatus = flight['flight_status'];
+      body: RefreshIndicator(
+        onRefresh: fetchFlights, // Manual refresh on swipe down
+        child: Row(
+          children: <Widget>[
+            if (!isSmallScreen)
+              NavigationRail(
+                selectedIndex: _selectedIndex,
+                onDestinationSelected: (int index) {
+                  setState(() {
+                    _selectedIndex = index;
+                  });
+                },
+                extended: isLargeScreen,
+                destinations: _navBarItems
+                    .map((item) => NavigationRailDestination(
+                        icon: item.icon,
+                        selectedIcon: item.activeIcon,
+                        label: Text(item.label!)))
+                    .toList(),
+              ),
+            const VerticalDivider(thickness: 1, width: 1),
+            // Main content area
+            Expanded(
+              child: _selectedIndex == 1 // Flights page index
+                  ? isLoading
+                      ? const Center(
+                          child: FadingCircle(),
+                        )
+                      : Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(
+                                'Last Updated: $lastUpdated',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            Expanded(
+                              child: ListView.builder(
+                                itemCount: flights.length,
+                                itemBuilder: (context, index) {
+                                  final flight = flights[index];
+                                  final departure = flight['departure'];
+                                  final arrival = flight['arrival'];
+                                  final airline = flight['airline']['name'];
+                                  final flightStatus = flight['flight_status'];
 
-                          return FlightCard(
-                            flight: flight,
-                            airline: airline,
-                            departureAirport: departure['airport'],
-                            departureTime: departure['scheduled'],
-                            arrivalAirport: arrival['airport'],
-                            arrivalTime: arrival['scheduled'],
-                            flightStatus: flightStatus,
-                          );
-                        },
-                      )
-                : Center(
-                    child: Text("${_navBarItems[_selectedIndex].label} Page"),
-                  ),
+                                  return FlightCard(
+                                    flight: flight,
+                                    airline: airline,
+                                    departureAirport: departure['airport'],
+                                    departureTime: departure['scheduled'],
+                                    arrivalAirport: arrival['airport'],
+                                    arrivalTime: arrival['scheduled'],
+                                    flightStatus: flightStatus,
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        )
+                  : _selectedIndex == 2 // Settings page index
+                      ? SettingsPage(
+                          autoRefresh: autoRefresh,
+                          toggleAutoRefresh: _toggleAutoRefresh,
+                        )
+                      : Center(
+                          child: Text(
+                              "${_navBarItems[_selectedIndex].label} Page"),
+                        ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class SettingsPage extends StatelessWidget {
+  final bool autoRefresh;
+  final VoidCallback toggleAutoRefresh;
+
+  const SettingsPage({
+    super.key,
+    required this.autoRefresh,
+    required this.toggleAutoRefresh,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'Settings',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 20),
+          SwitchListTile(
+            title: Text('Auto Refresh'),
+            value: autoRefresh,
+            onChanged: (value) {
+              toggleAutoRefresh();
+            },
           ),
         ],
       ),
