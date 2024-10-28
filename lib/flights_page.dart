@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class FlightsPage extends StatefulWidget {
   const FlightsPage({super.key});
@@ -36,7 +37,7 @@ class _FlightsPageState extends State<FlightsPage> {
   int _selectedIndex = 0; // Default page
   bool autoRefresh = true; // Auto-refresh toggle
   String lastUpdated = ""; // Timestamp for last update
-  final String apiKey = '525c242ee8ebc29f8e3da6ba6e528d40';
+  final String apiKey = '36443575b2e7771dae76b69fd7f5d165';
 
   @override
   void initState() {
@@ -77,7 +78,7 @@ class _FlightsPageState extends State<FlightsPage> {
     Future.delayed(Duration(seconds: 10), () {
       if (autoRefresh) {
         fetchFlights();
-        _startAutoRefresh(); // Recursively call to continue refreshing
+        _startAutoRefresh();
       }
     });
   }
@@ -145,53 +146,57 @@ class _FlightsPageState extends State<FlightsPage> {
             const VerticalDivider(thickness: 1, width: 1),
             // Main content area
             Expanded(
-              child: _selectedIndex == 1 // Flights page index
-                  ? isLoading
-                      ? const Center(
-                          child: FadingCircle(),
-                        )
-                      : Column(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Text(
-                                'Last Updated: $lastUpdated',
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            Expanded(
-                              child: ListView.builder(
-                                itemCount: flights.length,
-                                itemBuilder: (context, index) {
-                                  final flight = flights[index];
-                                  final departure = flight['departure'];
-                                  final arrival = flight['arrival'];
-                                  final airline = flight['airline']['name'];
-                                  final flightStatus = flight['flight_status'];
+              child: _selectedIndex == 0 // Home page index
+                  ? HomePage()
+                  : _selectedIndex == 1
+                      ? isLoading
+                          ? const Center(
+                              child: FadingCircle(),
+                            )
+                          : Column(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    'Last Updated: $lastUpdated',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: ListView.builder(
+                                    itemCount: flights.length,
+                                    itemBuilder: (context, index) {
+                                      final flight = flights[index];
+                                      final departure = flight['departure'];
+                                      final arrival = flight['arrival'];
+                                      final airline = flight['airline']['name'];
+                                      final flightStatus =
+                                          flight['flight_status'];
 
-                                  return FlightCard(
-                                    flight: flight,
-                                    airline: airline,
-                                    departureAirport: departure['airport'],
-                                    departureTime: departure['scheduled'],
-                                    arrivalAirport: arrival['airport'],
-                                    arrivalTime: arrival['scheduled'],
-                                    flightStatus: flightStatus,
-                                  );
-                                },
-                              ),
+                                      return FlightCard(
+                                        flight: flight,
+                                        airline: airline,
+                                        departureAirport: departure['airport'],
+                                        departureTime: departure['scheduled'],
+                                        arrivalAirport: arrival['airport'],
+                                        arrivalTime: arrival['scheduled'],
+                                        flightStatus: flightStatus,
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
+                            )
+                      : _selectedIndex == 2 // Settings page index
+                          ? SettingsPage(
+                              autoRefresh: autoRefresh,
+                              toggleAutoRefresh: _toggleAutoRefresh,
+                            )
+                          : Center(
+                              child: Text(
+                                  "${_navBarItems[_selectedIndex].label} Page"),
                             ),
-                          ],
-                        )
-                  : _selectedIndex == 2 // Settings page index
-                      ? SettingsPage(
-                          autoRefresh: autoRefresh,
-                          toggleAutoRefresh: _toggleAutoRefresh,
-                        )
-                      : Center(
-                          child: Text(
-                              "${_navBarItems[_selectedIndex].label} Page"),
-                        ),
             ),
           ],
         ),
@@ -200,15 +205,182 @@ class _FlightsPageState extends State<FlightsPage> {
   }
 }
 
+class HomePage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Welcome to Flight Tracker',
+                style: TextStyle(
+                    fontSize: 34,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blueAccent),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Your ultimate tool for monitoring flights in real-time. Stay updated and travel smart!',
+                style: TextStyle(fontSize: 18, color: Colors.black54),
+              ),
+              const SizedBox(height: 30),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: const [
+                    BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 5,
+                        offset: Offset(0, 2)),
+                  ],
+                ),
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Features:',
+                      style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blueAccent),
+                    ),
+                    const SizedBox(height: 10),
+                    _featureTile('Real-time flight updates', Icons.access_time),
+                    _featureTile('Detailed flight information', Icons.info),
+                    _featureTile('User-friendly interface', Icons.touch_app),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 30),
+              Text(
+                'Featured Flights:',
+                style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blueAccent),
+              ),
+              const SizedBox(height: 10),
+              Container(
+                height: 200,
+                decoration: BoxDecoration(
+                  color: Colors.blue[100],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Center(
+                  child: Text(
+                    'Featured flights will go here.',
+                    style: TextStyle(fontSize: 18, color: Colors.black54),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _featureTile(String title, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.blueAccent),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(fontSize: 18),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// New Flights List Widget
+class FlightsList extends StatelessWidget {
+  final List<dynamic> flights;
+  final String lastUpdated;
+
+  const FlightsList(
+      {super.key, required this.flights, required this.lastUpdated});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(
+            'Last Updated: $lastUpdated',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        Expanded(
+          child: ListView.builder(
+            itemCount: flights.length,
+            itemBuilder: (context, index) {
+              final flight = flights[index];
+
+              // Use null-aware operators (??) to provide default values for null fields
+              final departure = flight['departure'] ?? {};
+              final arrival = flight['arrival'] ?? {};
+              final airline = flight['airline']?['name'] ?? 'Unknown Airline';
+              final flightStatus =
+                  flight['flight_status'] ?? 'Status Unavailable';
+
+              final departureAirport =
+                  departure['airport'] ?? 'Unknown Departure Airport';
+              final departureTime = departure['scheduled'] ?? 'N/A';
+              final arrivalAirport =
+                  arrival['airport'] ?? 'Unknown Arrival Airport';
+              final arrivalTime = arrival['scheduled'] ?? 'N/A';
+
+              return FlightCard(
+                flight: flight,
+                airline: airline,
+                departureAirport: departureAirport,
+                departureTime: departureTime,
+                arrivalAirport: arrivalAirport,
+                arrivalTime: arrivalTime,
+                flightStatus: flightStatus,
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class SettingsPage extends StatelessWidget {
   final bool autoRefresh;
   final VoidCallback toggleAutoRefresh;
+  final Uri flutterUrl = Uri.parse('https://flutter.dev');
 
-  const SettingsPage({
+  SettingsPage({
     super.key,
     required this.autoRefresh,
     required this.toggleAutoRefresh,
   });
+
+  Future<void> _launchFlutterWebsite() async {
+    if (await canLaunchUrl(flutterUrl)) {
+      await launchUrl(flutterUrl, mode: LaunchMode.externalApplication);
+    } else {
+      throw 'Could not launch $flutterUrl';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -227,6 +399,11 @@ class SettingsPage extends StatelessWidget {
             onChanged: (value) {
               toggleAutoRefresh();
             },
+          ),
+          ListTile(
+            title: Text('Visit Flutter Official Website'),
+            trailing: Icon(Icons.open_in_new),
+            onTap: _launchFlutterWebsite,
           ),
         ],
       ),
