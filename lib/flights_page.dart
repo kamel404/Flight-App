@@ -1,4 +1,4 @@
-// ignore_for_file: library_private_types_in_public_api, unnecessary_const, prefer_const_constructors, use_key_in_widget_constructors
+// ignore_for_file: library_private_types_in_public_api, unnecessary_const, prefer_const_constructors, use_key_in_widget_constructors, non_constant_identifier_names
 
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -261,7 +261,7 @@ class HomePage extends StatelessWidget {
               ),
               const SizedBox(height: 30),
               Text(
-                'Featured Flights:',
+                'Lorem Ipsum:',
                 style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -275,9 +275,9 @@ class HomePage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Center(
-                  child: Text(
-                    'Featured flights will go here.',
-                    style: TextStyle(fontSize: 18, color: Colors.black54),
+                  child: Image.asset(
+                    'flightImage.jpg',
+                    // fit: BoxFit.fill,
                   ),
                 ),
               ),
@@ -367,6 +367,7 @@ class SettingsPage extends StatelessWidget {
   final bool autoRefresh;
   final VoidCallback toggleAutoRefresh;
   final Uri flutterUrl = Uri.parse('https://flutter.dev');
+  final Uri GithubUrl = Uri.parse('https://github.com/kamel404');
 
   SettingsPage({
     super.key,
@@ -377,6 +378,14 @@ class SettingsPage extends StatelessWidget {
   Future<void> _launchFlutterWebsite() async {
     if (await canLaunchUrl(flutterUrl)) {
       await launchUrl(flutterUrl, mode: LaunchMode.externalApplication);
+    } else {
+      throw 'Could not launch $flutterUrl';
+    }
+  }
+
+  Future<void> _launchMyGithub() async {
+    if (await canLaunchUrl(GithubUrl)) {
+      await launchUrl(GithubUrl, mode: LaunchMode.externalApplication);
     } else {
       throw 'Could not launch $flutterUrl';
     }
@@ -404,6 +413,11 @@ class SettingsPage extends StatelessWidget {
             title: Text('Visit Flutter Official Website'),
             trailing: Icon(Icons.open_in_new),
             onTap: _launchFlutterWebsite,
+          ),
+          ListTile(
+            title: Text('Visit My Github'),
+            trailing: Icon(Icons.open_in_new),
+            onTap: _launchMyGithub,
           ),
         ],
       ),
