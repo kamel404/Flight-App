@@ -7,7 +7,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/flights_list.dart';
 import 'home_page.dart';
 import 'settings_page.dart';
-// import '../widgets/fading_circle.dart';
 
 class FlightsPage extends StatefulWidget {
   const FlightsPage({super.key});
