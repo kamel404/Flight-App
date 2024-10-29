@@ -16,13 +16,6 @@ class FlightsList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Text(
-            'Last Updated: $lastUpdated',
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ),
         Expanded(
           child: ListView.builder(
             itemCount: flights.length,

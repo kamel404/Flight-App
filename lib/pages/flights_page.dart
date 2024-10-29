@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/flights_list.dart';
 import 'home_page.dart';
 import 'settings_page.dart';
-import '../widgets/fading_circle.dart';
+// import '../widgets/fading_circle.dart';
 
 class FlightsPage extends StatefulWidget {
   const FlightsPage({super.key});
@@ -18,6 +18,10 @@ class FlightsPage extends StatefulWidget {
 
 class _FlightsPageState extends State<FlightsPage> {
   List<dynamic> flights = [];
+  List<String> departureAirports = [];
+  List<String> arrivalAirports = [];
+  String? selectedDeparture;
+  String? selectedArrival;
   bool isLoading = true;
   int _selectedIndex = 0;
   bool autoRefresh = true;
@@ -37,7 +41,7 @@ class _FlightsPageState extends State<FlightsPage> {
   Future<void> _loadAutoRefreshSetting() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      autoRefresh = prefs.getBool('autoRefresh') ?? true; // Default to true
+      autoRefresh = prefs.getBool('autoRefresh') ?? true;
     });
     if (autoRefresh) {
       _startAutoRefresh();
@@ -67,7 +71,7 @@ class _FlightsPageState extends State<FlightsPage> {
 
   Future<void> fetchFlights() async {
     setState(() {
-      isLoading = true; // Set loading state
+      isLoading = true;
     });
 
     try {
@@ -75,10 +79,22 @@ class _FlightsPageState extends State<FlightsPage> {
           'http://api.aviationstack.com/v1/flights?access_key=$apiKey'));
 
       if (response.statusCode == 200) {
+        final data = jsonDecode(response.body)['data'] ?? [];
         setState(() {
-          flights = jsonDecode(response.body)['data'] ?? [];
-          isLoading = false;
+          flights = data;
           lastUpdated = DateTime.now().toString().substring(11, 19);
+          isLoading = false;
+
+          departureAirports = data
+              .map((flight) => flight['departure']['airport'])
+              .toSet()
+              .toList()
+              .cast<String>();
+          arrivalAirports = data
+              .map((flight) => flight['arrival']['airport'])
+              .toSet()
+              .toList()
+              .cast<String>();
         });
       } else {
         _showErrorSnackbar('Failed to load flights: ${response.reasonPhrase}');
@@ -91,7 +107,6 @@ class _FlightsPageState extends State<FlightsPage> {
     }
   }
 
-// Method to show error Snackbar
   void _showErrorSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -99,6 +114,23 @@ class _FlightsPageState extends State<FlightsPage> {
         duration: const Duration(seconds: 3),
       ),
     );
+  }
+
+  void _resetFilters() {
+    setState(() {
+      selectedDeparture = null;
+      selectedArrival = null;
+    });
+  }
+
+  List<dynamic> _filterFlights() {
+    return flights.where((flight) {
+      final departureMatch = selectedDeparture == null ||
+          flight['departure']['airport'] == selectedDeparture;
+      final arrivalMatch = selectedArrival == null ||
+          flight['arrival']['airport'] == selectedArrival;
+      return departureMatch && arrivalMatch;
+    }).toList();
   }
 
   void _onNavBarTapped(int index) {
@@ -110,9 +142,6 @@ class _FlightsPageState extends State<FlightsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //     // title: const Text('Flights'),
-      //     ),
       bottomNavigationBar: BottomNavigationBar(
         items: const [
           BottomNavigationBarItem(
@@ -172,11 +201,150 @@ class _FlightsPageState extends State<FlightsPage> {
                   : _selectedIndex == 1
                       ? isLoading
                           ? const Center(
-                              child: FadingCircle(),
+                              child: CircularProgressIndicator(),
                             )
-                          : FlightsList(
-                              flights: flights,
-                              lastUpdated: lastUpdated,
+                          : Column(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Card(
+                                    elevation: 3,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(20.0),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          // Title with Icon
+                                          const Row(
+                                            children: [
+                                              Icon(Icons.filter_list,
+                                                  color: Colors.blue),
+                                              SizedBox(width: 8),
+                                              Text(
+                                                'Filter Flights',
+                                                style: TextStyle(
+                                                    fontSize: 20,
+                                                    fontWeight:
+                                                        FontWeight.w600),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 20),
+
+                                          // Departure Airport Dropdown
+                                          const Text('Departure Airport',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold)),
+                                          DropdownButtonFormField<String>(
+                                            isExpanded: true,
+                                            decoration: InputDecoration(
+                                              border: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8)),
+                                              contentPadding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 12),
+                                            ),
+                                            hint: const Text(
+                                                "Select Departure Airport"),
+                                            value: selectedDeparture,
+                                            onChanged: (value) {
+                                              setState(() {
+                                                selectedDeparture = value;
+                                              });
+                                            },
+                                            items: departureAirports
+                                                .map((airport) =>
+                                                    DropdownMenuItem(
+                                                      value: airport,
+                                                      child: Text(airport),
+                                                    ))
+                                                .toList(),
+                                          ),
+                                          const SizedBox(height: 16),
+
+                                          // Arrival Airport Dropdown
+                                          const Text('Arrival Airport',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold)),
+                                          DropdownButtonFormField<String>(
+                                            isExpanded: true,
+                                            decoration: InputDecoration(
+                                              border: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8)),
+                                              contentPadding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 12),
+                                            ),
+                                            hint: const Text(
+                                                "Select Arrival Airport"),
+                                            value: selectedArrival,
+                                            onChanged: (value) {
+                                              setState(() {
+                                                selectedArrival = value;
+                                              });
+                                            },
+                                            items: arrivalAirports
+                                                .map((airport) =>
+                                                    DropdownMenuItem(
+                                                      value: airport,
+                                                      child: Text(airport),
+                                                    ))
+                                                .toList(),
+                                          ),
+                                          const SizedBox(height: 24),
+
+                                          // Divider Line
+                                          const Divider(thickness: 1),
+
+                                          // Reset Button and Last Updated Time
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              ElevatedButton.icon(
+                                                onPressed: _resetFilters,
+                                                icon: const Icon(Icons.refresh,
+                                                    size: 18),
+                                                label:
+                                                    const Text('Reset Filters'),
+                                                style: ElevatedButton.styleFrom(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 16,
+                                                      vertical: 12),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                  ),
+                                                ),
+                                              ),
+                                              Text(
+                                                'Last Updated: $lastUpdated',
+                                                style: const TextStyle(
+                                                    fontSize: 13,
+                                                    color: Colors.grey),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: FlightsList(
+                                    flights: _filterFlights(),
+                                    lastUpdated: lastUpdated,
+                                  ),
+                                ),
+                              ],
                             )
                       : _selectedIndex == 2
                           ? SettingsPage(
