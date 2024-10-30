@@ -57,6 +57,7 @@ class FlightDetailPage extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                           color: Colors.blueAccent,
                         ),
+                        overflow: TextOverflow.ellipsis, // Handle overflow
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -65,6 +66,7 @@ class FlightDetailPage extends StatelessWidget {
                           fontSize: 18,
                           color: Colors.grey,
                         ),
+                        overflow: TextOverflow.ellipsis, // Handle overflow
                       ),
                     ],
                   ),
@@ -178,6 +180,7 @@ class FlightDetailPage extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
           textAlign: TextAlign.center,
+          overflow: TextOverflow.ellipsis, // Handle overflow
         ),
         const SizedBox(height: 4),
         Text(

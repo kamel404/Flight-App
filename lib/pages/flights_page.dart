@@ -25,7 +25,7 @@ class _FlightsPageState extends State<FlightsPage> {
   int _selectedIndex = 0;
   bool autoRefresh = true;
   String lastUpdated = "";
-  final String apiKey = 'a74f970d156624d7ac9c18c172f3dc1c';
+  final String apiKey = '2ff44ce9c93d999bec9cf72e8ab75b53';
 
   @override
   void initState() {
@@ -84,13 +84,16 @@ class _FlightsPageState extends State<FlightsPage> {
           lastUpdated = DateTime.now().toString().substring(11, 19);
           isLoading = false;
 
+          // Safely extract departure and arrival airports
           departureAirports = data
-              .map((flight) => flight['departure']['airport'])
+              .map((flight) => flight['departure']?['airport'])
+              .where((airport) => airport != null)
               .toSet()
               .toList()
               .cast<String>();
           arrivalAirports = data
-              .map((flight) => flight['arrival']['airport'])
+              .map((flight) => flight['arrival']?['airport'])
+              .where((airport) => airport != null)
               .toSet()
               .toList()
               .cast<String>();
@@ -125,9 +128,9 @@ class _FlightsPageState extends State<FlightsPage> {
   List<dynamic> _filterFlights() {
     return flights.where((flight) {
       final departureMatch = selectedDeparture == null ||
-          flight['departure']['airport'] == selectedDeparture;
+          flight['departure']?['airport'] == selectedDeparture;
       final arrivalMatch = selectedArrival == null ||
-          flight['arrival']['airport'] == selectedArrival;
+          flight['arrival']?['airport'] == selectedArrival;
       return departureMatch && arrivalMatch;
     }).toList();
   }
