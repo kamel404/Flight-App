@@ -37,7 +37,8 @@ class FlightDetailPage extends StatelessWidget {
         title: const Text('Flight Details'),
         elevation: 0,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
+        // Wrap in SingleChildScrollView
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,7 +58,7 @@ class FlightDetailPage extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                           color: Colors.blueAccent,
                         ),
-                        overflow: TextOverflow.ellipsis, // Handle overflow
+                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -66,7 +67,7 @@ class FlightDetailPage extends StatelessWidget {
                           fontSize: 18,
                           color: Colors.grey,
                         ),
-                        overflow: TextOverflow.ellipsis, // Handle overflow
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
@@ -159,33 +160,17 @@ class FlightDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildFlightDetailCard(IconData icon, String detail, String label) {
+  Widget _buildFlightDetailCard(IconData icon, String value, String label) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        CircleAvatar(
-          radius: 30,
-          backgroundColor: Colors.blueAccent.withOpacity(0.1),
-          child: Icon(
-            icon,
-            color: Colors.blueAccent,
-            size: 24,
-          ),
-        ),
-        const SizedBox(height: 8),
+        Icon(icon, size: 24),
         Text(
-          detail,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-          textAlign: TextAlign.center,
-          overflow: TextOverflow.ellipsis, // Handle overflow
+          value,
+          style: const TextStyle(fontSize: 16),
         ),
-        const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(color: Colors.grey),
+          style: const TextStyle(fontSize: 14, color: Colors.grey),
         ),
       ],
     );

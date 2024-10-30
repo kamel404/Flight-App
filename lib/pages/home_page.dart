@@ -76,9 +76,9 @@ class HomePage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Center(
-                  child: Image.asset(
-                    'flightImage.jpg',
-                    // fit: BoxFit.fill,
+                  child: Image.network(
+                    'https://cdn.prod.website-files.com/63bc83b29094ec80844b6dd5/63c9a3fc3f4cd43895c74bd6_S5IxTfD1F.webp',
+                    fit: BoxFit.fill,
                   ),
                 ),
               ),
