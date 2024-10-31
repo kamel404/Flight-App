@@ -21,8 +21,6 @@ class FlightsList extends StatelessWidget {
             itemCount: flights.length,
             itemBuilder: (context, index) {
               final flight = flights[index];
-
-              // Use null-aware operators (??) to provide default values for null fields
               final departure = flight['departure'] ?? {};
               final arrival = flight['arrival'] ?? {};
               final airline = flight['airline']?['name'] ?? 'Unknown Airline';

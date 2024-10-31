@@ -113,7 +113,7 @@ class _FlightsPageState extends State<FlightsPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        duration: const Duration(seconds: 3),
+        duration: const Duration(seconds: 4),
       ),
     );
   }
@@ -318,7 +318,7 @@ class _FlightsPageState extends State<FlightsPage> {
                                                 style: ElevatedButton.styleFrom(
                                                   padding: const EdgeInsets
                                                       .symmetric(
-                                                      horizontal: 16,
+                                                      horizontal: 12,
                                                       vertical: 12),
                                                   shape: RoundedRectangleBorder(
                                                     borderRadius:

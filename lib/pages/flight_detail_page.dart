@@ -139,7 +139,7 @@ class FlightDetailPage extends StatelessWidget {
                 // Scheduled Time
                 _buildFlightDetailCard(
                   Icons.schedule,
-                  info['scheduled'],
+                  info['scheduled'].toString().substring(0, 10),
                   'Scheduled',
                 ),
               ],

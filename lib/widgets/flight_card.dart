@@ -68,12 +68,13 @@ class FlightCard extends StatelessWidget {
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
+                    horizontal: 5,
+                    vertical: 2,
                   ),
+                  constraints: BoxConstraints(minHeight: 20, minWidth: 20),
                   decoration: BoxDecoration(
                     color: statusColor,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     flightStatus.toUpperCase(),
@@ -85,7 +86,7 @@ class FlightCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 7),
 
             // Departure and Arrival Info
             Row(
@@ -99,7 +100,7 @@ class FlightCard extends StatelessWidget {
                           style: TextStyle(fontWeight: FontWeight.bold)),
                       Text(departureAirport,
                           style: const TextStyle(fontSize: 16)),
-                      Text(departureTime,
+                      Text(departureTime.substring(0, 10),
                           style: const TextStyle(color: Colors.grey)),
                     ],
                   ),
@@ -113,7 +114,7 @@ class FlightCard extends StatelessWidget {
                           style: TextStyle(fontWeight: FontWeight.bold)),
                       Text(arrivalAirport,
                           style: const TextStyle(fontSize: 16)),
-                      Text(arrivalTime,
+                      Text(arrivalTime.substring(0, 10),
                           style: const TextStyle(color: Colors.grey)),
                     ],
                   ),
